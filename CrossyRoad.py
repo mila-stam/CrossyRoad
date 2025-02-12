@@ -220,13 +220,12 @@ class Character:
         self.name = name
         self.rect = image.get_rect()
 
-# Create character objects
 characters = [
     Character(player_img, "Monster"),
     Character(native_img, "Native"),
     Character(purple_ninja_img, "Ninja")
 ]
-selected_character = 0  # Index of currently selected character
+selected_character = 0  
 
 
 def spawn_level_objects(level):
@@ -316,7 +315,6 @@ while running:
                     game_started = True
                     start_time = time.time()
                     player = Player(characters[selected_character].image)
-                # Handle character selection
                 for i, character in enumerate(characters):
                     button_rect = pygame.Rect(
                         WIDTH // 2 - (len(characters) * 150) // 2 + i * 150,
@@ -327,9 +325,8 @@ while running:
                     if button_rect.collidepoint(event.pos):
                         selected_character = i
 
-            elif game_over or game_won:  # Handle both game over and game won states
+            elif game_over or game_won:  
                     if restart_button.collidepoint(event.pos):
-                        # Reset for new game
                         current_level = 1
                         player = Player(characters[selected_character].image)
                         player.rect.bottom = HEIGHT - 10
@@ -340,7 +337,7 @@ while running:
                         elapsed_time = 0
                         game_over = False
                         game_won = False
-                        game_started = True  # Set to True for immediate game start
+                        game_started = True  
                         score_added = False
                         spawn_level_objects(current_level)
                         coins.empty()
@@ -348,27 +345,6 @@ while running:
                             x = random.randint(0, WIDTH - 30)
                             y = random.randint(0, HEIGHT - 30)
                             coins.add(Coin(x, y))
-                    elif menu_button.collidepoint(event.pos):
-                            # Complete reset to start screen
-                            current_level = 1
-                            selected_character = 0  # Reset character selection
-                            player = Player(characters[selected_character].image)
-                            player.rect.bottom = HEIGHT - 10
-                            player.rect.centerx = WIDTH // 2
-                            level_score = 0
-                            total_score = 0
-                            start_time = time.time()
-                            elapsed_time = 0
-                            game_over = False
-                            game_won = False
-                            game_started = False  # Return to start screen
-                            score_added = False
-                            spawn_level_objects(current_level)
-                            coins.empty()
-                            for _ in range(15):
-                                x = random.randint(0, WIDTH - 30)
-                                y = random.randint(0, HEIGHT - 30)
-                                coins.add(Coin(x, y))
             elif level_complete and continue_button.collidepoint(event.pos):
                 total_score += level_score
                 level_score = 0
@@ -572,46 +548,34 @@ while running:
                      HEIGHT * 3 // 4 + 10))
 
     if game_over:
-        screen.fill((139, 0, 0))
-        screen.blit(game_over_img,
-                    (WIDTH // 2 - game_over_img.get_width() // 2,
-                     HEIGHT // 4 - game_over_img.get_height() // 2))
-
+        screen.fill((139, 0, 0))  
+        screen.blit(game_over_img, 
+                    (WIDTH // 2 - game_over_img.get_width() // 2, 
+                    HEIGHT // 4 - game_over_img.get_height() // 2))
+        
         game_over_text = large_font.render(f"Level: {current_level} Score: {total_score}", True, BLACK)
         time_text = game_font.render(f"Time: {elapsed_time}s", True, BLACK)
-
-        screen.blit(game_over_text,
-                    (WIDTH // 2 - game_over_text.get_width() // 2,
-                     HEIGHT // 2))
-        screen.blit(time_text,
-                    (WIDTH // 2 - time_text.get_width() // 2,
-                     HEIGHT // 2 + 50))
-
-        # Draw the Back to Menu button next to restart button
-        menu_button = pygame.Rect(WIDTH // 2 - 220, HEIGHT - 150, 200, 50)
-
-        if menu_button.collidepoint(pygame.mouse.get_pos()):
-            pygame.draw.rect(screen, button_hover_color, menu_button, border_radius=10)
-        else:
-            pygame.draw.rect(screen, button_color, menu_button, border_radius=10)
-
-        menu_text = game_font.render("Back to Menu", True, WHITE)
-        screen.blit(menu_text,
-                    (WIDTH // 2 - 220 + (200 - menu_text.get_width()) // 2,
-                     HEIGHT - 140))
-
-        # Move the restart button to the right
-        restart_button = pygame.Rect(WIDTH // 2 + 20, HEIGHT - 150, 200, 50)
-
+        
+        screen.blit(game_over_text, 
+                    (WIDTH // 2 - game_over_text.get_width() // 2, 
+                    HEIGHT // 2))
+        screen.blit(time_text, 
+                    (WIDTH // 2 - time_text.get_width() // 2, 
+                    HEIGHT // 2 + 50))
+        
+        button_color = (0, 0, 0)
+        button_hover_color = (100, 100, 100)
+        restart_button = pygame.Rect(WIDTH // 2 - 100, HEIGHT - 150, 200, 50)
+        
         if restart_button.collidepoint(pygame.mouse.get_pos()):
             pygame.draw.rect(screen, button_hover_color, restart_button, border_radius=10)
         else:
             pygame.draw.rect(screen, button_color, restart_button, border_radius=10)
-
+        
         restart_text = game_font.render("Try Again", True, WHITE)
-        screen.blit(restart_text,
-                    (WIDTH // 2 + 20 + (200 - restart_text.get_width()) // 2,
-                     HEIGHT - 140))
+        screen.blit(restart_text, 
+                    (WIDTH // 2 - restart_text.get_width() // 2, 
+                    HEIGHT - 140))
 
     if game_won:
         screen.blit(confetti_img, (0, 0))
@@ -669,33 +633,21 @@ while running:
                     (WIDTH // 2 - time_text.get_width() // 2,
                      HEIGHT // 2 + 100))
 
-        # Draw the Back to Menu button next to restart button
-        menu_button = pygame.Rect(WIDTH // 2 - 220, HEIGHT - 150, 200, 50)
-
-        if menu_button.collidepoint(pygame.mouse.get_pos()):
-            pygame.draw.rect(screen, button_hover_color, menu_button, border_radius=10)
-            pygame.draw.rect(screen, (255, 255, 255, 128), menu_button.inflate(4, 4),
-                             border_radius=10, width=2)
-        else:
-            pygame.draw.rect(screen, button_color, menu_button, border_radius=10)
-
-        menu_text = game_font.render("Back to Menu", True, WHITE)
-        screen.blit(menu_text,
-                    (WIDTH // 2 - 220 + (200 - menu_text.get_width()) // 2,
-                     HEIGHT - 140))
+        
 
         # Move the restart button to the right
-        restart_button = pygame.Rect(WIDTH // 2 + 20, HEIGHT - 150, 200, 50)
-
+        restart_button = pygame.Rect(WIDTH // 2 - 100, HEIGHT - 150, 200, 50)
         if restart_button.collidepoint(pygame.mouse.get_pos()):
             pygame.draw.rect(screen, button_hover_color, restart_button, border_radius=10)
+            pygame.draw.rect(screen, (255, 255, 255, 128), restart_button.inflate(4, 4), 
+                            border_radius=10, width=2)
         else:
             pygame.draw.rect(screen, button_color, restart_button, border_radius=10)
-
+        
         restart_text = game_font.render("Play Again", True, WHITE)
-        screen.blit(restart_text,
-                    (WIDTH // 2 + 20 + (200 - restart_text.get_width()) // 2,
-                     HEIGHT - 140))
+        screen.blit(restart_text, 
+                    (WIDTH // 2 - restart_text.get_width() // 2, 
+                    HEIGHT - 140))
 
 
 
