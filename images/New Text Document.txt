@@ -3,15 +3,18 @@ import random
 import time
 import math
 
+# Initialize Pygame
+# pygame.init()
 pygame.display.init()
 pygame.font.init()
 
+# Set up the display
 WIDTH, HEIGHT = 1000, 750
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Crossy Road Clone")
 print(pygame.font.get_fonts())
 
-
+# Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
@@ -20,8 +23,9 @@ GRAY = (128, 128, 128)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
 
+# Define three different area schemes
 AREA_SCHEMES = {
-    1: [  
+    1: [  # Level 1 - Beginner
         {"type": "grass", "y": HEIGHT-50, "height": 50},
         {"type": "road", "y": HEIGHT - 150, "height": 100},
         {"type": "grass", "y": HEIGHT - 200, "height": 50},
@@ -35,7 +39,7 @@ AREA_SCHEMES = {
         {"type": "river", "y": HEIGHT - 700, "height": 50},
         {"type": "grass", "y": 0, "height": 100}
     ],
-    2: [ 
+    2: [  # Level 2 - Easy
         {"type": "grass", "y": HEIGHT-50, "height": 50},
         {"type": "river", "y": HEIGHT - 100, "height": 50},
         {"type": "road", "y": HEIGHT - 200, "height": 100},
@@ -49,7 +53,7 @@ AREA_SCHEMES = {
         {"type": "grass", "y": HEIGHT - 700, "height": 50},
         {"type": "grass", "y": 0, "height": 100}
     ],
-    3: [ 
+    3: [  # Level 3 - Medium
         {"type": "grass", "y": HEIGHT-50, "height": 50},
         {"type": "river", "y": HEIGHT - 100, "height": 50},
         {"type": "road", "y": HEIGHT - 200, "height": 100},
@@ -63,7 +67,7 @@ AREA_SCHEMES = {
         {"type": "road", "y": HEIGHT - 700, "height": 100},
         {"type": "grass", "y": 0, "height": 50}
     ],
-    4: [ 
+    4: [  # Level 4 - Hard
         {"type": "grass", "y": HEIGHT-50, "height": 50},
         {"type": "road", "y": HEIGHT - 150, "height": 100},
         {"type": "road", "y": HEIGHT - 250, "height": 100},
@@ -77,7 +81,7 @@ AREA_SCHEMES = {
         {"type": "river", "y": HEIGHT - 700, "height": 50},
         {"type": "grass", "y": 0, "height": 50}
     ],
-    5: [ 
+    5: [  # Level 5 - Expert
         {"type": "grass", "y": HEIGHT-50, "height": 50},
         {"type": "river", "y": HEIGHT - 100, "height": 50},
         {"type": "road", "y": HEIGHT - 200, "height": 100},
@@ -92,7 +96,7 @@ AREA_SCHEMES = {
     ]
 }
 
-
+# Load images
 car_img = pygame.image.load('images/car-toy.png').convert_alpha()
 car_img = pygame.transform.scale(car_img, (60, 40))
 
@@ -110,6 +114,7 @@ log_img = pygame.transform.scale(log_img, (new_width, 40))
 level_up_img = pygame.image.load('images/level up.png').convert_alpha()
 level_up_img = pygame.transform.scale(level_up_img, (400, 350))
 
+# Add these with other image loading
 game_over_img = pygame.image.load('images/game over.png').convert_alpha()
 game_over_img = pygame.transform.scale(game_over_img, (600, 400))
 
@@ -123,22 +128,25 @@ keys_img = pygame.image.load('images/keys1.png').convert_alpha()
 keys_img = pygame.transform.scale(keys_img, (200, 100))
 
 title_img = pygame.image.load('images/Untitled-1.png').convert_alpha()
-title_img = pygame.transform.scale(title_img, (600, 150))  
+title_img = pygame.transform.scale(title_img, (600, 150))  # Adjust size 
+# Add after other image loading
 grass_img = pygame.image.load('images/grass03.png').convert_alpha()
 road_img = pygame.image.load('images/crossy-road.png').convert_alpha()
 river_img = pygame.image.load('images/crossy-river.png').convert_alpha()
 
-grass_img.set_alpha(200)  
+grass_img.set_alpha(200)  # Adjust opacity (0-255)
 
+# Scale images to match area heights while maintaining aspect ratio
 def scale_terrain_image(image, desired_height):
     original_size = image.get_rect().size
     scale_factor = desired_height / original_size[1]
     new_width = int(original_size[0] * scale_factor)
     return pygame.transform.scale(image, (new_width, desired_height))
 
-grass_img = scale_terrain_image(grass_img, 50)  
-road_img = scale_terrain_image(road_img, 100)   
-river_img = scale_terrain_image(river_img, 50)  
+# Scale images
+grass_img = scale_terrain_image(grass_img, 50)  # grass areas are 50px high
+road_img = scale_terrain_image(road_img, 100)   # road areas are 100px high
+river_img = scale_terrain_image(river_img, 50)  # river areas are 50px high
 
 
 class Player(pygame.sprite.Sprite):
@@ -148,25 +156,11 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.bottom = HEIGHT - 10
         self.rect.centerx = WIDTH // 2
-        self.normal_step = 30
-        self.river_step = 50  
-        self.current_step = self.normal_step
 
     def move(self, dx, dy):
-        actual_dx = dx * (self.current_step / self.normal_step)
-        actual_dy = dy * (self.current_step / self.normal_step)
-        self.rect.x += actual_dx
-        self.rect.y += actual_dy
+        self.rect.x += dx
+        self.rect.y += dy
         self.rect.clamp_ip(screen.get_rect())
-
-    def update_step_size(self, areas, current_y):
-        for i in range(len(areas) - 1):
-            if (areas[i]["type"] == "river" and 
-                areas[i+1]["type"] == "river" and 
-                areas[i]["y"] < current_y < areas[i]["y"] + areas[i]["height"] + areas[i+1]["height"]):
-                self.current_step = self.river_step
-                return
-        self.current_step = self.normal_step
 
 class Car(pygame.sprite.Sprite):
     def __init__(self, y, speed):
@@ -174,13 +168,13 @@ class Car(pygame.sprite.Sprite):
         self.image = car_img
         self.rect = self.image.get_rect()
         self.rect.y = y
-        self.rect.x = 0  
+        self.rect.x = 0  # This will be set in spawn_level_objects
         self.speed = speed
 
     def update(self):
         self.rect.x += self.speed
         if self.rect.left > WIDTH:
-            self.rect.right = -100  
+            self.rect.right = -100  # Reset further back for more spacing
 
 
 class Log(pygame.sprite.Sprite):
@@ -214,16 +208,20 @@ def spawn_level_objects(level):
     
     for area in AREA_SCHEMES[level]:
         if area["type"] == "road":
+            # Random number of cars (2 to 4) for each road
             num_cars = random.randint(2, 4)
             used_positions = set()
             
+            # Distribute cars across the road width
             for _ in range(num_cars):
                 max_attempts = 100
                 attempts = 0
                 while attempts < max_attempts:
+                    # Random x position across entire width plus buffer
                     x_pos = random.randint(-200, WIDTH + 200)
                     y = random.randint(area["y"], area["y"] + area["height"] - 40)
                     
+                    # Check if position is far enough from other cars
                     if all(abs(x_pos - pos[0]) > 150 and abs(y - pos[1]) > 45 for pos in used_positions):
                         used_positions.add((x_pos, y))
                         car = Car(y, car_speed)
@@ -247,12 +245,16 @@ def spawn_level_objects(level):
                     attempts += 1
 
 
+# Game setup
 player = Player()
 cars = pygame.sprite.Group()
 logs = pygame.sprite.Group()
 coins = pygame.sprite.Group()
 current_level = 1
 
+
+# Initial spawn
+# spawn_level_objects(current_level)
 try:
     spawn_level_objects(current_level)
 except Exception as e:
@@ -260,77 +262,130 @@ except Exception as e:
     pygame.quit()
     exit(1)
 
+# Spawn coins
 for _ in range(15):
     x = random.randint(0, WIDTH - 30)
     y = random.randint(0, HEIGHT - 30)
     coins.add(Coin(x, y))
 
+# Game variables
 clock = pygame.time.Clock()
 game_font = pygame.font.SysFont('bahnschrift', 36)
-large_font = pygame.font.SysFont('berlinsansfb', 52)
+large_font = pygame.font.SysFont('berlinsansfb', 48)
 small_font = pygame.font.SysFont('berlinsansfb', 36)
 elapsed_time = 0
 game_over = False
 game_won = False
 level_complete = False
+# Add to game variables
 level_score = 0
 total_score = 0
 start_time = time.time()
 score_added = False
+# Add to game variables
 game_started = False
 
+# Game loop
 running = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if not game_started:
-                if start_button.collidepoint(event.pos):
-                    game_started = True
-                    start_time = time.time()
-            elif game_over and restart_button.collidepoint(event.pos):
-                current_level = 1
-                player.rect.bottom = HEIGHT - 10
-                player.rect.centerx = WIDTH // 2
-                level_score = 0
-                total_score = 0
-                start_time = time.time()
-                elapsed_time = 0
-                game_over = False
-                game_won = False
-                game_started = False
-                spawn_level_objects(current_level)
-                coins.empty()
-                for _ in range(15):
-                    x = random.randint(0, WIDTH - 30)
-                    y = random.randint(0, HEIGHT - 30)
-                    coins.add(Coin(x, y))
-            elif level_complete and continue_button.collidepoint(event.pos):
-                total_score += level_score
-                level_score = 0
-                current_level += 1
-                player.rect.bottom = HEIGHT - 10
-                player.rect.centerx = WIDTH // 2
-                level_complete = False
-                start_time = time.time() - elapsed_time
-                spawn_level_objects(current_level)
-                coins.empty()
-                for _ in range(15):
-                    x = random.randint(0, WIDTH - 30)
-                    y = random.randint(0, HEIGHT - 30)
-                    coins.add(Coin(x, y))
-        elif event.type == pygame.KEYDOWN and game_started and not game_over and not game_won and not level_complete:
+        elif event.type == pygame.KEYDOWN and not game_over and not game_won:
             if event.key == pygame.K_LEFT:
                 player.move(-30, 0)
             elif event.key == pygame.K_RIGHT:
                 player.move(30, 0)
             elif event.key == pygame.K_UP:
                 player.move(0, -30)
+        elif event.type == pygame.MOUSEBUTTONDOWN and (game_over or game_won):
+            if restart_button.collidepoint(event.pos):
+                current_level = 1
+                player.rect.bottom = HEIGHT - 10
+                player.rect.centerx = WIDTH // 2
+                total_score = 0
+                level_score = 0
+                start_time = time.time()
+                elapsed_time = 0
+                game_over = False
+                game_won = False
+                spawn_level_objects(current_level)
+                coins.empty()
+                for _ in range(15):
+                    x = random.randint(0, WIDTH - 30)
+                    y = random.randint(0, HEIGHT - 30)
+                    coins.add(Coin(x, y))
+        elif event.type == pygame.MOUSEBUTTONDOWN and level_complete:
+            if continue_button.collidepoint(event.pos):
+                total_score += level_score
+                level_score=0
+                current_level += 1
+                player.rect.bottom = HEIGHT - 10
+                player.rect.centerx = WIDTH // 2
+                level_complete = False
+                spawn_level_objects(current_level)
+                coins.empty()
+                for _ in range(15):
+                    x = random.randint(0, WIDTH - 30)
+                    y = random.randint(0, HEIGHT - 30)
+                    coins.add(Coin(x, y))     
 
+
+    if not game_over and not game_won:
+        cars.update()
+        logs.update()
+        if game_started and not game_over and not game_won and not level_complete:
+            elapsed_time = int(time.time() - start_time)
+
+        # Car collision check
+        for car in cars:
+            player_feet = pygame.Rect(
+                player.rect.x,
+                player.rect.bottom - 10,
+                player.rect.width,
+                10
+            )
+            if player_feet.colliderect(car.rect):
+                game_over = True
+
+        # River collision logic
+        on_log = False
+        for area in AREA_SCHEMES[current_level]:
+            if area["type"] == "river":
+                if area["y"] < player.rect.bottom < area["y"] + area["height"]:
+                    log_collisions = pygame.sprite.spritecollide(player, logs, False)
+                    if log_collisions:
+                        on_log = True
+                        player.rect.x += log_collisions[0].speed
+                    else:
+                        game_over = True
+                elif player.rect.bottom <= area["y"]:
+                    on_log = False
+
+        collected_coins = pygame.sprite.spritecollide(player, coins, True)
+        level_score += len(collected_coins)
+
+        if player.rect.top <= 0:
+            if current_level < 5: 
+                level_complete = True
+                # current_level += 1
+                player.rect.bottom = HEIGHT - 10
+                player.rect.centerx = WIDTH // 2
+                spawn_level_objects(current_level)
+                coins.empty()
+                for _ in range(15):
+                    x = random.randint(0, WIDTH - 30)
+                    y = random.randint(0, HEIGHT - 30)
+                    coins.add(Coin(x, y))
+            else:
+                game_won = True
+
+
+    # Draw everything
     screen.fill(WHITE)
 
     if not game_started:
+        # Draw repeating grass background
         img_width = grass_img.get_width()
         num_repeats_x = WIDTH // img_width + 1
         num_repeats_y = HEIGHT // grass_img.get_height() + 1
@@ -338,19 +393,24 @@ while running:
             for x in range(num_repeats_x):
                 screen.blit(grass_img, (x * img_width, y * grass_img.get_height()))
         
+        # Draw road
         road_y = HEIGHT // 3
         img_width = road_img.get_width()
         num_repeats = WIDTH // img_width + 1
         for i in range(num_repeats):
             screen.blit(road_img, (i * img_width, road_y))
         
+        # Draw moving car
         car_x = (pygame.time.get_ticks() // 5) % (WIDTH + 60) - 60
         screen.blit(car_img, (car_x, road_y + 30))
         
+        # Draw keys image
         screen.blit(keys_img, (WIDTH // 2 - keys_img.get_width() // 2, road_y + 100))
         
+        # Draw title
         screen.blit(title_img, (WIDTH // 2 - title_img.get_width() // 2, 100))
 
+        # Draw start button
         button_color = (52, 76, 183)
         button_hover_color = (0, 9, 87)
         start_button = pygame.Rect(WIDTH // 2 - 100, HEIGHT - 150, 200, 50)
@@ -368,13 +428,10 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN:
             if start_button.collidepoint(event.pos):
                 game_started = True
-
-    elif not game_over and not game_won and not level_complete:
-        cars.update()
-        logs.update()
-        elapsed_time = int(time.time() - start_time)
-
+                
+    if not game_over and not game_won:
         for area in AREA_SCHEMES[current_level]:
+            # Calculate how many times to repeat the image
             if area["type"] == "grass":
                 img_width = grass_img.get_width()
                 num_repeats = WIDTH // img_width + 1
@@ -404,52 +461,8 @@ while running:
         screen.blit(time_text, (WIDTH - 150, 10))
         screen.blit(level_text, (WIDTH // 2 - 50, 10))
 
-
-        for car in cars:
-            player_feet = pygame.Rect(
-                player.rect.x,
-                player.rect.bottom - 10,
-                player.rect.width,
-                10
-            )
-            if player_feet.colliderect(car.rect):
-                game_over = True
-
-        on_log = False
-        player.update_step_size(AREA_SCHEMES[current_level], player.rect.bottom)
-
-        for area in AREA_SCHEMES[current_level]:
-            if area["type"] == "river":
-                if area["y"] < player.rect.bottom < area["y"] + area["height"]:
-                    log_collisions = pygame.sprite.spritecollide(player, logs, False)
-                    if log_collisions:
-                        on_log = True
-                        player.rect.x += log_collisions[0].speed
-                    else:
-                        game_over = True
-                elif player.rect.bottom <= area["y"]:
-                    on_log = False
-
-        collected_coins = pygame.sprite.spritecollide(player, coins, True)
-        level_score += len(collected_coins)
-
-
-        if player.rect.top <= 0:
-            if current_level < 5: 
-                level_complete = True
-                player.rect.bottom = HEIGHT - 10
-                player.rect.centerx = WIDTH // 2
-                spawn_level_objects(current_level)
-                coins.empty()
-                for _ in range(15):
-                    x = random.randint(0, WIDTH - 30)
-                    y = random.randint(0, HEIGHT - 30)
-                    coins.add(Coin(x, y))
-            else:
-                game_won = True
-
-
     if level_complete:
+        # Draw repeating grass background
         img_width = grass_img.get_width()
         num_repeats_x = WIDTH // img_width + 1
         num_repeats_y = HEIGHT // grass_img.get_height() + 1
@@ -457,19 +470,23 @@ while running:
             for x in range(num_repeats_x):
                 screen.blit(grass_img, (x * img_width, y * grass_img.get_height()))
         
+        # Draw level up image centered at top
         screen.blit(level_up_img, 
                     (WIDTH // 2 - level_up_img.get_width() // 2, 
                     HEIGHT // 4 - level_up_img.get_height() // 2))
         
         
         
+        # Level completion text
         level_text = large_font.render(f"Level {current_level} Complete!", True, BLACK)
         coins_text = game_font.render(f"Coins Collected: {level_score}", True, BLACK)
         
+        # Draw text with shadow effect
         shadow_offset = 2
         shadow_color = (100, 100, 100)
         
        
+        # Draw text
         screen.blit(level_text, 
                     (WIDTH // 2 - level_text.get_width() // 2, 
                     HEIGHT // 2 - 20))
@@ -477,9 +494,11 @@ while running:
                     (WIDTH // 2 - coins_text.get_width() // 2, 
                     HEIGHT // 2 + 30))
         
+        # Create a nicer looking button
         button_color = (52, 76, 183)
         button_hover_color = (0, 9, 87)
         
+        # Check if mouse is over button
         mouse_pos = pygame.mouse.get_pos()
         continue_button = pygame.Rect(WIDTH // 2 - 100, HEIGHT * 3 // 4, 200, 50)
         
@@ -494,7 +513,7 @@ while running:
                     HEIGHT * 3 // 4 + 10))
 
     if game_over:
-        screen.fill((139, 0, 0))  
+        screen.fill((139, 0, 0))  # Dark red
         screen.blit(game_over_img, 
                     (WIDTH // 2 - game_over_img.get_width() // 2, 
                     HEIGHT // 4 - game_over_img.get_height() // 2))
@@ -525,51 +544,46 @@ while running:
 
 
     if game_won:
+        # Draw confetti background
         screen.blit(confetti_img, (0, 0))
         
-        trophy_y_offset = math.sin(pygame.time.get_ticks() * 0.004) * 10
+        # Draw trophy with slight animation
+        trophy_y_offset = math.sin(pygame.time.get_ticks() * 0.004) * 10  # Gentle floating animation
         screen.blit(trophy_img, 
                     (WIDTH // 2 - trophy_img.get_width() // 2, 
                     HEIGHT // 4 - trophy_img.get_height() // 2 + trophy_y_offset))
         
+        # Score addition (only once)
         if not score_added:
             total_score += level_score
             score_added = True
         
-        game_won_text = large_font.render("Congratulations!", True, (218, 165, 32))
+        # Create text shadows for better visibility
+        shadow_offset = 2
+        shadow_color = (100, 100, 100)
+        
+        # Render congratulations text with shadow
+        game_won_text = large_font.render("Congratulations!", True, (218, 165, 32))  # Golden color
+        shadow_text = large_font.render("Congratulations!", True, shadow_color)
+        
+        # Render stats with shadow
         score_text = game_font.render(f"Final Score: {total_score}", True, BLACK)
+        shadow_score = game_font.render(f"Final Score: {total_score}", True, shadow_color)
         time_text = game_font.render(f"Total Time: {elapsed_time}s", True, BLACK)
+        shadow_time = game_font.render(f"Total Time: {elapsed_time}s", True, shadow_color)
         
-        text_padding = 20
+        # Draw text shadows
+        screen.blit(shadow_text, 
+                    (WIDTH // 2 - game_won_text.get_width() // 2 + shadow_offset, 
+                    HEIGHT // 2 + shadow_offset))
+        screen.blit(shadow_score, 
+                    (WIDTH // 2 - score_text.get_width() // 2 + shadow_offset, 
+                    HEIGHT // 2 + 50 + shadow_offset))
+        screen.blit(shadow_time, 
+                    (WIDTH // 2 - time_text.get_width() // 2 + shadow_offset, 
+                    HEIGHT // 2 + 100 + shadow_offset))
         
-        s = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-        
-        congrats_bg = pygame.Rect(
-            WIDTH // 2 - game_won_text.get_width() // 2 - text_padding,
-            HEIGHT // 2 - text_padding,
-            game_won_text.get_width() + text_padding * 2,
-            game_won_text.get_height() + text_padding * 2
-        )
-        pygame.draw.rect(s, (246,235,241, 230), congrats_bg, border_radius=10)
-        
-        score_bg = pygame.Rect(
-            WIDTH // 2 - score_text.get_width() // 2 - text_padding,
-            HEIGHT // 2 + 50 - text_padding,
-            score_text.get_width() + text_padding * 2,
-            score_text.get_height() + text_padding * 2
-        )
-        pygame.draw.rect(s, (246,235,241, 230), score_bg, border_radius=10)
-        
-        time_bg = pygame.Rect(
-            WIDTH // 2 - time_text.get_width() // 2 - text_padding,
-            HEIGHT // 2 + 100 - text_padding,
-            time_text.get_width() + text_padding * 2,
-            time_text.get_height() + text_padding * 2
-        )
-        pygame.draw.rect(s, (246,235,241, 230), time_bg, border_radius=10)
-        
-        screen.blit(s, (0,0))
-        
+        # Draw main text
         screen.blit(game_won_text, 
                     (WIDTH // 2 - game_won_text.get_width() // 2, 
                     HEIGHT // 2))
@@ -580,24 +594,30 @@ while running:
                     (WIDTH // 2 - time_text.get_width() // 2, 
                     HEIGHT // 2 + 100))
         
+        # Create animated button
         button_color = (52, 76, 183)
         button_hover_color = (0, 9, 87)
         restart_button = pygame.Rect(WIDTH // 2 - 100, HEIGHT - 150, 200, 50)
         
+        # Button hover effect
         if restart_button.collidepoint(pygame.mouse.get_pos()):
             pygame.draw.rect(screen, button_hover_color, restart_button, border_radius=10)
+            # Add glow effect
             pygame.draw.rect(screen, (255, 255, 255, 128), restart_button.inflate(4, 4), 
                             border_radius=10, width=2)
         else:
             pygame.draw.rect(screen, button_color, restart_button, border_radius=10)
         
+        # Button text with shadow
         restart_text = game_font.render("Play Again", True, WHITE)
         screen.blit(restart_text, 
                     (WIDTH // 2 - restart_text.get_width() // 2, 
                     HEIGHT - 140))
         
+        # Handle button click
         if event.type == pygame.MOUSEBUTTONDOWN:
             if restart_button.collidepoint(event.pos):
+                # Reset game state
                 current_level = 1
                 player.rect.bottom = HEIGHT - 10
                 player.rect.centerx = WIDTH // 2
@@ -607,17 +627,16 @@ while running:
                 elapsed_time = 0
                 game_over = False
                 game_won = False
-                game_started = False
+                game_started = False  # Return to start screen
                 score_added = False
                 
+                # Reset game objects
                 spawn_level_objects(current_level)
                 coins.empty()
                 for _ in range(15):
                     x = random.randint(0, WIDTH - 30)
                     y = random.randint(0, HEIGHT - 30)
                     coins.add(Coin(x, y))
-
-
 
     pygame.display.flip()
     clock.tick(60)
